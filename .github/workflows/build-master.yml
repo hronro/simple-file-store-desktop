@@ -1,0 +1,113 @@
+name: Build Binaries (master)
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+env:
+  APP_NAME: simple-file-store-desktop
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target.label }}
+    runs-on: ${{ matrix.target.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - label: Linux x86_64
+            os: ubuntu-22.04
+            platform: linux/amd64
+            artifact: simple-file-store-desktop-linux-x86_64.tar.gz
+          - label: Linux arm64
+            os: ubuntu-22.04-arm
+            platform: linux/arm64
+            artifact: simple-file-store-desktop-linux-arm64.tar.gz
+          - label: Windows x86_64
+            os: windows-latest
+            platform: windows/amd64
+            artifact: simple-file-store-desktop-windows-x86_64.zip
+          - label: Windows arm64
+            os: windows-11-arm
+            platform: windows/arm64
+            artifact: simple-file-store-desktop-windows-arm64.zip
+          - label: macOS x86_64
+            os: macos-15-intel
+            platform: darwin/amd64
+            artifact: simple-file-store-desktop-macos-x86_64.zip
+          - label: macOS arm64
+            os: macos-latest
+            platform: darwin/arm64
+            artifact: simple-file-store-desktop-macos-arm64.zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Build Wails application (Windows)
+        if: runner.os == 'Windows'
+        run: go tool wails build --platform "${{ matrix.target.platform }}" -o "${{ env.APP_NAME }}.exe"
+
+      - name: Build Wails application (non-Windows)
+        if: runner.os != 'Windows'
+        run: go tool wails build --platform "${{ matrix.target.platform }}" -o "${{ env.APP_NAME }}"
+
+      - name: Package Linux binary
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist
+          tar -C build/bin -czf "dist/${{ matrix.target.artifact }}" "${{ env.APP_NAME }}"
+
+      - name: Package macOS application bundle
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist
+          ditto -c -k --keepParent "build/bin/${{ env.APP_NAME }}.app" "dist/${{ matrix.target.artifact }}"
+
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $binaryPath = "build/bin/$env:APP_NAME.exe"
+          if (-not (Test-Path $binaryPath)) {
+            $binary = Get-ChildItem -Path build/bin -Filter "*.exe" -File | Select-Object -First 1
+            if (-not $binary) {
+              throw "Unable to find built Windows binary in build/bin"
+            }
+            $binaryPath = $binary.FullName
+          }
+          Compress-Archive -Path $binaryPath -DestinationPath "dist/${{ matrix.target.artifact }}" -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.target.artifact }}
+          path: dist/${{ matrix.target.artifact }}
+          if-no-files-found: error
