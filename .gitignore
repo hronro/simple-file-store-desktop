@@ -1,0 +1,11 @@
+# Frontend dependencies
+frontend/node_modules/
+
+# Frontend build output
+frontend/dist/
+
+# Wails/desktop build output
+build/bin/
+
+# Local files
+.DS_Store
