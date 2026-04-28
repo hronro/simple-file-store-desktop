@@ -1,6 +1,8 @@
-module github.com/hronro/simple-file-store/desktop
+module github.com/hronro/simple-file-store-desktop
 
-go 1.24
+go 1.26.2
+
+tool github.com/wailsapp/wails/v2/cmd/wails
 
 require github.com/wailsapp/wails/v2 v2.12.0
 
@@ -102,5 +104,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 )
-
-tool github.com/wailsapp/wails/v2/cmd/wails

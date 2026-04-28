@@ -9,8 +9,7 @@ permissions:
   contents: read
 
 env:
-  APP_NAME: simple-file-store-desktop
-  NODE_OPTIONS: "--max-old-space-size=4096"
+  APP_NAME: simple-file-store
 
 jobs:
   validate-tag:
@@ -42,27 +41,27 @@ jobs:
           - label: Linux x86_64
             os: ubuntu-22.04
             platform: linux/amd64
-            artifact: simple-file-store-desktop-linux-x86_64.tar.gz
+            artifact: simple-file-store-linux-x86_64.tar.gz
           - label: Linux arm64
             os: ubuntu-22.04-arm
             platform: linux/arm64
-            artifact: simple-file-store-desktop-linux-arm64.tar.gz
+            artifact: simple-file-store-linux-arm64.tar.gz
           - label: Windows x86_64
             os: windows-latest
             platform: windows/amd64
-            artifact: simple-file-store-desktop-windows-x86_64.zip
+            artifact: simple-file-store-windows-x86_64.zip
           - label: Windows arm64
             os: windows-11-arm
             platform: windows/arm64
-            artifact: simple-file-store-desktop-windows-arm64.zip
+            artifact: simple-file-store-windows-arm64.zip
           - label: macOS x86_64
             os: macos-15-intel
             platform: darwin/amd64
-            artifact: simple-file-store-desktop-macos-x86_64.zip
+            artifact: simple-file-store-macos-x86_64.zip
           - label: macOS arm64
             os: macos-latest
             platform: darwin/arm64
-            artifact: simple-file-store-desktop-macos-arm64.zip
+            artifact: simple-file-store-macos-arm64.zip
 
     steps:
       - name: Checkout repository
@@ -75,13 +74,6 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
@@ -145,7 +137,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: dist
-          pattern: simple-file-store-desktop-*
+          pattern: simple-file-store-*
           merge-multiple: true
 
       - name: Publish release assets

@@ -1,40 +1,74 @@
 # Simple File Store Desktop
 
-Desktop uploader application built with Go + Wails, for the [simple-file-store](https://github.com/hronro/simple-file-store) service.
+A Wails desktop uploader for Simple File Store. It uses the server's resumable upload API from Go instead of the browser/webview, allowing higher parallel chunk counts and avoiding browser connection limits.
 
 ## Features
 
-- Configurable service endpoint
-- Configurable upload thread count
-- Login with username/password using server `/login`
-- JWT expiry check before authenticated requests
-- True multi-connection chunk upload in Go (HTTP/2 disabled for upload clients)
-- Upload progress events per file and per chunk
+- Login before selecting files or uploading.
+- Stores the JWT only in memory for the current app session.
+- Uploads through Go's HTTP client with resumable chunks.
+- Retries each failed chunk up to 5 times.
+- Stops immediately when the server returns `401 Unauthorized` and asks the user to login again.
+- Uses plain HTML, CSS, and JavaScript for the frontend. No frontend framework or build tool is required.
 
-## How it works
+## Requirements
 
-1. Login request is sent to `POST /login`.
-2. The app extracts `access_token` from response cookies.
-3. Before each authenticated call, token `exp` is checked locally.
-4. Upload uses server resumable endpoints:
-   - `GET /upload/{file}`
-   - `POST /upload/{file}`
-   - `PUT /upload/{file}`
-5. Chunk workers run in parallel, each with its own HTTP transport and HTTP/2 disabled.
+- Go 1.26 or newer.
+- Wails system dependencies for your platform.
+- Optional, for regenerating the app icon from the server SVG: `librsvg` with `rsvg-convert`.
 
-## Run in dev mode
+The Wails CLI is installed as a project-local Go tool. Do not install it globally for this app.
 
-```bash
+## Setup
+
+From this directory:
+
+```sh
+go mod tidy
+```
+
+If the local Wails tool needs to be restored manually:
+
+```sh
+go get -tool github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+## Development
+
+Run the app in development mode:
+
+```sh
 go tool wails dev
 ```
 
-## Build
+Build the desktop app:
 
-```bash
+```sh
 go tool wails build
 ```
 
+## Regenerate Icon
+
+The desktop icon is based on `<path-to-simple-file-store>/src/assets/favicon.svg`.
+
+```sh
+rsvg-convert -w 1024 -h 1024 <path-to-simple-file-store>/src/assets/favicon.svg -o build/appicon.png
+go tool wails build
+```
+
+## Usage
+
+1. Start a Simple File Store server.
+2. Open the desktop app.
+3. Enter the server URL, username, and password.
+4. Login first. The app stores the JWT in memory only.
+5. Select a file and configure the remote folder and parallel chunk count.
+6. Start the upload.
+
+If the server returns `401 Unauthorized`, the upload stops, the in-memory session is cleared, and the app asks you to login again.
+
 ## Notes
 
-- The app currently focuses on upload workflow only.
-- It does not implement file listing or download UI.
+- The upload logic intentionally lives in Go, not JavaScript.
+- The app uses the existing server endpoints: `/login` and `/upload/<path>`.
+- Generated build output under `build/bin` is ignored by git.

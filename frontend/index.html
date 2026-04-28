@@ -1,12 +1,86 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simple File Store Desktop</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple File Store</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Parallel uploader</p>
+        <h1>Simple File Store</h1>
+        <p class="subtitle">Upload large files through the resumable API without browser connection limits.</p>
+      </section>
+
+      <form id="loginForm" class="panel">
+        <div class="grid">
+          <label>
+            Server URL
+            <input id="serverUrl" name="serverUrl" type="url" placeholder="http://127.0.0.1:8080" required />
+          </label>
+          <label>
+            Username
+            <input id="username" name="username" type="text" autocomplete="username" value="admin" />
+          </label>
+          <label>
+            Password
+            <input id="password" name="password" type="password" autocomplete="current-password" value="password" />
+          </label>
+          <label class="check-row">
+            <input id="skipTlsVerify" name="skipTlsVerify" type="checkbox" />
+            Allow self-signed TLS certificates
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="loginButton" type="submit">Login</button>
+          <button id="logoutButton" class="secondary" type="button" disabled>Logout</button>
+          <span id="authStatus">Not logged in</span>
+        </div>
+      </form>
+
+      <form id="uploadForm" class="panel upload-panel locked">
+        <div class="grid">
+          <label>
+            Remote folder
+            <input id="remotePath" name="remotePath" type="text" placeholder="optional/subfolder" disabled />
+          </label>
+          <label>
+            Parallel chunks
+            <input id="concurrency" name="concurrency" type="number" min="1" max="128" value="16" disabled />
+          </label>
+        </div>
+
+        <div class="file-row">
+          <button id="selectFile" class="secondary" type="button" disabled>Choose file</button>
+          <div class="file-card">
+            <span id="fileName">No file selected</span>
+            <small id="filePath"></small>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="startUpload" type="submit" disabled>Start upload</button>
+          <span id="status">Idle</span>
+        </div>
+
+        <div class="progress" aria-label="Upload progress">
+          <div id="progressBar"></div>
+        </div>
+        <div id="progressText" class="progress-text">0%</div>
+      </form>
+
+      <section class="panel log-panel">
+        <div class="log-heading">
+          <h2>Activity</h2>
+          <button id="clearLog" class="ghost" type="button">Clear</button>
+        </div>
+        <pre id="log"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
 </html>
